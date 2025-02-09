@@ -12,34 +12,39 @@ import util.PasswordUtil;
 
 public class UserDAO {
 
-    // Existing method - Validate user credentials
-    public boolean validateUser(String email, String password) {
-        String sql = "SELECT password FROM users WHERE email = ? AND deleted_at IS NULL";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            System.out.println("Validating user with email: " + email);
-            stmt.setString(1, email);
-            ResultSet rs = stmt.executeQuery();
-            
-            if (rs.next()) {
-                String storedHash = rs.getString("password");
-                System.out.println("Found stored hash in database: " + storedHash);
-                
-                // Use the existing PasswordUtil to verify
-                boolean isValid = PasswordUtil.verifyPassword(password, storedHash);
-                System.out.println("Password validation result: " + isValid);
-                return isValid;
-            }
-            System.out.println("No user found with email: " + email);
-            return false;
-        } catch (SQLException e) {
-            System.out.println("SQL Error during validation: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
+	public boolean validateUser(String email, String password) {
+	    String sql = "SELECT password FROM users WHERE email = ? AND deleted_at IS NULL";
+	    
+	    try (Connection conn = DatabaseConnection.getConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        
+	        System.out.println("Debug - Validating user email: " + email);
+	        stmt.setString(1, email);
+	        
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            if (rs.next()) {
+	                String storedHash = rs.getString("password");
+	                System.out.println("Debug - Retrieved hash from database");
+	                System.out.println("Debug - Retrieved hash length: " + (storedHash != null ? storedHash.length() : "null"));
+	                
+	                if (storedHash == null || storedHash.trim().isEmpty()) {
+	                    System.out.println("Debug - Stored hash is null or empty");
+	                    return false;
+	                }
+	                
+	                boolean isValid = PasswordUtil.verifyPassword(password, storedHash);
+	                System.out.println("Debug - Final validation result: " + isValid);
+	                return isValid;
+	            }
+	            System.out.println("Debug - No user found with email: " + email);
+	            return false;
+	        }
+	    } catch (SQLException e) {
+	        System.out.println("Debug - SQL Error during validation: " + e.getMessage());
+	        e.printStackTrace();
+	        return false;
+	    }
+	}
     
     private boolean isDummyData(String email) {
         return email != null && (email.equals("user1@example.com") || email.equals("user2@example.com"));

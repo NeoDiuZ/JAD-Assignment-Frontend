@@ -28,12 +28,14 @@ public class RegisterController extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String name = request.getParameter("name");
         String email = request.getParameter("email");
         String password = request.getParameter("password");
         String phone = request.getParameter("phone");
+        System.out.println("Debug - Register - Raw password length: " + password.length());
+        System.out.println("Debug - Register - Raw password value: " + password);
 
         try {
             // Check if user already exists
@@ -47,7 +49,7 @@ public class RegisterController extends HttpServlet {
             User user = new User();
             user.setName(name);
             user.setEmail(email);
-            user.setPassword(PasswordUtil.hashPassword(password));
+            user.setPassword(password);
             user.setPhone(phone);
 
             if (userDAO.registerUser(user)) {

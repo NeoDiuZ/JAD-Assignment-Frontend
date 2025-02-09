@@ -29,6 +29,7 @@ public class LoginController extends HttpServlet {
             throws ServletException, IOException {
         String pathInfo = request.getServletPath();
         HttpSession session = request.getSession(false);
+        String password = request.getParameter("password");
 
         switch (pathInfo) {
             case "/admin":
@@ -69,6 +70,8 @@ public class LoginController extends HttpServlet {
         String loginType = request.getParameter("loginType");
         String email = request.getParameter("email");
         String password = request.getParameter("password");
+        System.out.println("Debug - Login - Raw password length: " + password.length());
+        System.out.println("Debug - Login - Raw password value: " + password);
         
         HttpSession session = request.getSession();
         
