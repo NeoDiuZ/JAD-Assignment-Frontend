@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.time.LocalDateTime;
+import util.StripeConfig;
 
 @WebServlet(urlPatterns = {
     "/cart",
@@ -54,6 +56,7 @@ public class CartController extends HttpServlet {
         int userId = (Integer) request.getSession().getAttribute("user");
         List<Cart> cartItems = cartDAO.getCartItems(userId);
         request.setAttribute("cartItems", cartItems);
+        request.setAttribute("stripePublicKey", StripeConfig.STRIPE_PUBLIC_KEY);
         request.getRequestDispatcher("/cart.jsp").forward(request, response);
     }
 
@@ -92,21 +95,31 @@ public class CartController extends HttpServlet {
 
     private void addToCart(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        int userId = (Integer) request.getSession().getAttribute("user");
-        int serviceId = Integer.parseInt(request.getParameter("serviceId"));
-        String bookingTime = request.getParameter("bookingTime");
-        float timeLength = Float.parseFloat(request.getParameter("timeLength"));
+        try {
+            int userId = (Integer) request.getSession().getAttribute("user");
+            int serviceId = Integer.parseInt(request.getParameter("serviceId"));
+            String bookingDateTime = request.getParameter("bookingDateTime");
+            float timeLength = Float.parseFloat(request.getParameter("timeLength"));
 
-        Cart cartItem = new Cart();
-        cartItem.setUserId(userId);
-        cartItem.setServiceId(serviceId);
-        cartItem.setBookingTime(Timestamp.valueOf(bookingTime));
-        cartItem.setTimeLength(timeLength);
+            // Convert the datetime-local input to proper timestamp format
+            LocalDateTime dateTime = LocalDateTime.parse(bookingDateTime);
+            Timestamp bookingTimestamp = Timestamp.valueOf(dateTime);
 
-        if (cartDAO.addToCart(cartItem)) {
-            response.sendRedirect("viewCart?success=added");
-        } else {
-            response.sendRedirect("viewCart?error=failed");
+            Cart cartItem = new Cart();
+            cartItem.setUserId(userId);
+            cartItem.setServiceId(serviceId);
+            cartItem.setBookingTime(bookingTimestamp);
+            cartItem.setTimeLength(timeLength);
+
+            if (cartDAO.addToCart(cartItem)) {
+                response.sendRedirect("viewCart?success=added");
+            } else {
+                response.sendRedirect("viewCart?error=failed");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.getSession().setAttribute("error", "Failed to add item to cart: " + e.getMessage());
+            response.sendRedirect("viewCart");
         }
     }
 

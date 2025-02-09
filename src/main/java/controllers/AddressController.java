@@ -10,7 +10,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.SQLException;
+import com.google.gson.JsonObject;
 
 @WebServlet("/address/*")
 public class AddressController extends HttpServlet {
@@ -74,12 +76,47 @@ public class AddressController extends HttpServlet {
         address.setPostalCode(request.getParameter("postalCode"));
 
         int newAddressId = addressDAO.addAddress(address);
-        if (newAddressId > 0) {
-            request.getSession().setAttribute("message", "Address added successfully");
+        
+        // Check if it's an AJAX request
+        boolean isAjax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+        
+        if (isAjax) {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            PrintWriter out = response.getWriter();
+            
+            if (newAddressId > 0) {
+                // Set the new addressId
+                address.setAddressId(newAddressId);
+                
+                // Create JSON response
+                JsonObject jsonResponse = new JsonObject();
+                jsonResponse.addProperty("success", true);
+                
+                JsonObject addressObj = new JsonObject();
+                addressObj.addProperty("addressId", address.getAddressId());
+                addressObj.addProperty("address", address.getAddress());
+                addressObj.addProperty("postalCode", address.getPostalCode());
+                
+                jsonResponse.add("address", addressObj);
+                
+                out.print(jsonResponse.toString());
+            } else {
+                JsonObject jsonResponse = new JsonObject();
+                jsonResponse.addProperty("success", false);
+                jsonResponse.addProperty("message", "Failed to add address");
+                out.print(jsonResponse.toString());
+            }
+            out.flush();
         } else {
-            request.getSession().setAttribute("error", "Failed to add address");
+            // Handle non-AJAX request (redirect as before)
+            if (newAddressId > 0) {
+                request.getSession().setAttribute("message", "Address added successfully");
+            } else {
+                request.getSession().setAttribute("error", "Failed to add address");
+            }
+            response.sendRedirect(request.getContextPath() + "/profile/edit");
         }
-        response.sendRedirect(request.getContextPath() + "/profile/edit");
     }
 
     private void handleUpdateAddress(HttpServletRequest request, HttpServletResponse response, int userId)

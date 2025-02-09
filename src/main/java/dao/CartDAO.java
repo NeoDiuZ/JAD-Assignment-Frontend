@@ -89,4 +89,19 @@ public class CartDAO {
             return false;
         }
     }
+
+    public boolean clearCart(int userId) {
+        String sql = "DELETE FROM cart WHERE user_id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, userId);
+            return stmt.executeUpdate() > 0;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

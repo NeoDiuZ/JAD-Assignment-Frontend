@@ -57,7 +57,13 @@
 
                 <!-- Address Selection -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Service Address</label>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-medium text-gray-700">Service Address</label>
+                        <button type="button" onclick="showAddressModal()"
+                                class="text-blue-600 hover:text-blue-800 text-sm">
+                            + Add New Address
+                        </button>
+                    </div>
                     <select name="addressId" id="addressId" required
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <c:forEach var="address" items="${addresses}">
@@ -119,6 +125,38 @@
         </div>
     </div>
 
+    <!-- Add Address Modal -->
+    <div id="addressModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Add New Address</h3>
+                <form id="addressForm" class="space-y-4">
+                    <div>
+                        <label for="newAddress" class="block text-sm font-medium text-gray-700">Address</label>
+                        <input type="text" id="newAddress" name="address" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="postalCode" class="block text-sm font-medium text-gray-700">Postal Code</label>
+                        <input type="text" id="postalCode" name="postalCode" pattern="[0-9]{6}" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                               title="Please enter a valid 6-digit postal code">
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-4">
+                        <button type="button" onclick="hideAddressModal()"
+                                class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            Add Address
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         function calculateTotal() {
             const basePrice = ${service.price};
@@ -154,8 +192,57 @@
             document.getElementById('confirmationModal').classList.add('hidden');
         }
 
+        function showAddressModal() {
+            document.getElementById('addressModal').classList.remove('hidden');
+        }
+
+        function hideAddressModal() {
+            document.getElementById('addressModal').classList.add('hidden');
+        }
+
         document.getElementById('confirmButton').addEventListener('click', function() {
             document.getElementById('bookingForm').submit();
+        });
+
+        // Add this function to refresh the address dropdown
+        function refreshAddressDropdown(newAddressId, addressData) {
+            const addressSelect = document.getElementById('addressId');
+            const option = document.createElement('option');
+            option.value = newAddressId;
+            option.text = `${addressData.address} (${addressData.postalCode})`;
+            option.selected = true;
+            addressSelect.appendChild(option);
+        }
+
+        // Update the address form submission handler
+        document.getElementById('addressForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new URLSearchParams(new FormData(this));
+            
+            fetch('${pageContext.request.contextPath}/address/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData.toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server response:', data);
+                if (data.success) {
+                    hideAddressModal();
+                    document.getElementById('addressForm').reset();
+                    window.location.reload(); // Add page refresh
+                } else {
+                    alert('Failed to add address: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to add address. Please try again.');
+            });
         });
 
         // Calculate initial total on page load

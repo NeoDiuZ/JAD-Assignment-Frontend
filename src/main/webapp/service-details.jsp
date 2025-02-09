@@ -85,7 +85,7 @@
                     <input type="hidden" name="serviceId" value="${service.id}">
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700">Select Date and Time</label>
-                        <input type="datetime-local" name="bookingTime" required 
+                        <input type="datetime-local" name="bookingDateTime" required 
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div class="mb-4">
