@@ -16,6 +16,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
+import jakarta.servlet.annotation.MultipartConfig;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,6 +25,8 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Date;
 import java.util.Map;
+
+import util.ImgurUploader;
 
 @WebServlet(name = "AdminController", urlPatterns = {
     "/dashboard", 
@@ -39,6 +43,11 @@ import java.util.Map;
     "/generateBookingReport",
     "/generateServiceCustomerReport"
 })
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024, // 1 MB
+    maxFileSize = 1024 * 1024 * 10,  // 10 MB
+    maxRequestSize = 1024 * 1024 * 15 // 15 MB
+)
 public class AdminController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final ServiceDAO serviceDAO = new ServiceDAO();
@@ -281,13 +290,28 @@ public class AdminController extends HttpServlet {
     }
 
     private void addService(HttpServletRequest request, HttpServletResponse response) 
-            throws IOException {
+            throws IOException, ServletException {
         try {
+            // Handle multipart form data
+            Part filePart = request.getPart("imageFile");
+            String imagePath = null;
+            
+            if (filePart != null && filePart.getSize() > 0) {
+                byte[] imageData = filePart.getInputStream().readAllBytes();
+                try {
+                    imagePath = ImgurUploader.uploadImage(imageData);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    response.sendRedirect("addService?error=image");
+                    return;
+                }
+            }
+
             Service service = new Service();
             service.setName(request.getParameter("serviceName"));
             service.setDescription(request.getParameter("description"));
             service.setPrice(Double.parseDouble(request.getParameter("price")));
-            service.setImagePath(request.getParameter("imagePath"));
+            service.setImagePath(imagePath);
             service.setCategoryId(Integer.parseInt(request.getParameter("categoryId")));
 
             if (serviceDAO.addService(service)) {

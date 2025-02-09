@@ -21,7 +21,7 @@
         <!-- Main Content -->
         <div class="container mx-auto flex-grow px-4 py-6">
             <div class="bg-white shadow-md rounded-lg p-6 max-w-2xl mx-auto">
-                <form action="addService" method="POST" class="space-y-6">
+                <form action="addService" method="POST" enctype="multipart/form-data" class="space-y-6">
                     <!-- Service Name -->
                     <div>
                         <label for="serviceName" class="block text-sm font-medium text-gray-700">Service Name</label>
@@ -43,11 +43,31 @@
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
                     </div>
 
-                    <!-- Image Path -->
+                    <!-- Image Upload -->
                     <div>
-                        <label for="imagePath" class="block text-sm font-medium text-gray-700">Image Path</label>
-                        <input type="text" id="imagePath" name="imagePath"
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                        <label for="imageFile" class="block text-sm font-medium text-gray-700">Service Image</label>
+                        <div class="mt-1 flex flex-col items-center">
+                            <!-- Image Preview -->
+                            <div id="imagePreview" class="hidden mb-4">
+                                <img id="preview" src="#" alt="Preview" 
+                                     class="max-w-xs h-48 object-cover rounded-lg shadow-md">
+                                <button type="button" onclick="removeImage()" 
+                                        class="mt-2 text-red-600 hover:text-red-800 text-sm">
+                                    Remove Image
+                                </button>
+                            </div>
+                            
+                            <!-- File Input -->
+                            <div class="w-full">
+                                <input type="file" id="imageFile" name="imageFile" accept="image/*"
+                                       onchange="previewImage(this)"
+                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
+                                              file:rounded-md file:border-0 file:text-sm file:font-semibold
+                                              file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                            <div id="imageError" class="mt-1 text-sm text-red-600 hidden"></div>
+                        </div>
                     </div>
 
                     <!-- Category Selection -->
@@ -73,5 +93,70 @@
             </div>
         </div>
     </div>
+
+    <script>
+    function previewImage(input) {
+        const preview = document.getElementById('preview');
+        const previewDiv = document.getElementById('imagePreview');
+        const errorDiv = document.getElementById('imageError');
+        
+        // Reset error message
+        errorDiv.textContent = '';
+        errorDiv.classList.add('hidden');
+        
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                errorDiv.textContent = 'File size must be less than 10MB';
+                errorDiv.classList.remove('hidden');
+                input.value = '';
+                return;
+            }
+            
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                errorDiv.textContent = 'Please upload a valid image file (PNG, JPG, or GIF)';
+                errorDiv.classList.remove('hidden');
+                input.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                previewDiv.classList.remove('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function removeImage() {
+        const input = document.getElementById('imageFile');
+        const preview = document.getElementById('preview');
+        const previewDiv = document.getElementById('imagePreview');
+        const errorDiv = document.getElementById('imageError');
+        
+        input.value = '';
+        preview.src = '#';
+        previewDiv.classList.add('hidden');
+        errorDiv.classList.add('hidden');
+    }
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const imageFile = document.getElementById('imageFile');
+        const errorDiv = document.getElementById('imageError');
+        
+        if (imageFile.files.length === 0) {
+            errorDiv.textContent = 'Please select an image';
+            errorDiv.classList.remove('hidden');
+            e.preventDefault();
+            return;
+        }
+    });
+    </script>
 </body>
 </html>
