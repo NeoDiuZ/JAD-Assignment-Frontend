@@ -1,7 +1,8 @@
 FROM gradle:jdk17 AS builder
 WORKDIR /app
 COPY . .
-RUN gradle war
+# Run Gradle with debug output
+RUN gradle war --stacktrace --info
 
 FROM tomcat:10-jdk17
 COPY --from=builder /app/build/libs/app.war /usr/local/tomcat/webapps/ROOT.war

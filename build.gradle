@@ -30,4 +30,20 @@ java {
 
 war {
     archiveFileName = 'app.war'
+    webXml = file('src/main/webapp/WEB-INF/web.xml')
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
 }
