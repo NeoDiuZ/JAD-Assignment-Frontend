@@ -3,4 +3,5 @@ builder = "dockerfile"
 
 [deploy]
 startCommand = "catalina.sh run"
-healthcheckPath = "/"
+healthcheckPath = "/index.jsp"
+healthcheckTimeout = 100

@@ -8,6 +8,10 @@ RUN curl -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/
 RUN ./gradlew war --no-daemon
 
 FROM tomcat:10-jdk17
+# Remove default ROOT application
+RUN rm -rf /usr/local/tomcat/webapps/*
 COPY --from=builder /app/build/libs/app.war /usr/local/tomcat/webapps/ROOT.war
+# Add environment variables if needed
+ENV JAVA_OPTS="-Xmx512m -XX:MaxPermSize=256m"
 EXPOSE 8080
 CMD ["catalina.sh", "run"]
