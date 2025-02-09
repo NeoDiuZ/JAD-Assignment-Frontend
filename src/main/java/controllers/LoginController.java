@@ -157,7 +157,7 @@ public class LoginController extends HttpServlet {
                     session.removeAttribute("error");
                     
                     System.out.println("Admin session created - Redirecting to dashboard");
-                    response.sendRedirect("dashboard");
+                    response.sendRedirect(request.getContextPath() + "/dashboard");
                     return;
                 } else {
                     System.out.println("Admin ID not found for email: " + email);

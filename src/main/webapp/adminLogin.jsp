@@ -35,7 +35,7 @@
 				</div>
 			</c:if>
 
-			<form class="space-y-6" action="${pageContext.request.contextPath}/admin/login" method="POST">
+			<form class="space-y-6" action="${pageContext.request.contextPath}/login" method="POST">
 				<input type="hidden" name="loginType" value="admin">
 				<div>
 					<label for="email"
