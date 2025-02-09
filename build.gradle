@@ -13,6 +13,14 @@ dependencies {
     implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1'
     implementation 'org.postgresql:postgresql:42.7.4'
     implementation 'com.google.code.gson:gson:2.10.1'
+    
+    // Add BCrypt dependency
+    implementation 'org.mindrot:jbcrypt:0.4'
+    
+    // Add other common dependencies your project might need
+    implementation 'com.stripe:stripe-java:24.5.0'
+    implementation 'org.json:json:20231013'
+    implementation 'commons-io:commons-io:2.11.0'
 }
 
 java {
