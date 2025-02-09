@@ -1,8 +1,11 @@
-FROM gradle:jdk17 AS builder
+FROM eclipse-temurin:17-jdk-focal AS builder
 WORKDIR /app
 COPY . .
-# Run Gradle with debug output
-RUN gradle war --stacktrace --info
+# Create the gradle wrapper
+RUN apt-get update && apt-get install -y gradle
+RUN gradle wrapper
+# Build with the wrapper
+RUN ./gradlew war --stacktrace --info --no-daemon
 
 FROM tomcat:10-jdk17
 COPY --from=builder /app/build/libs/app.war /usr/local/tomcat/webapps/ROOT.war

@@ -8,7 +8,8 @@ repositories {
 }
 
 dependencies {
-    providedCompile 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+    compileOnly 'jakarta.servlet.jsp:jakarta.servlet.jsp-api:3.1.1'
     implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:3.0.0'
     implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1'
     implementation 'org.postgresql:postgresql:42.7.4'
@@ -30,7 +31,12 @@ java {
 
 war {
     archiveFileName = 'app.war'
-    webXml = file('src/main/webapp/WEB-INF/web.xml')
+    enabled = true
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xlint:none']
 }
 
 sourceSets {
@@ -44,6 +50,6 @@ sourceSets {
     }
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
+tasks.withType(War) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
