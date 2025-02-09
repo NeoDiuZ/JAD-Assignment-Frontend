@@ -1,16 +1,15 @@
 package dao;
 
-import models.Service;
-import models.ServiceCategory;
-import models.Review;
-import util.DatabaseConnection;
-
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import models.Review;
+import models.Service;
+import models.ServiceCategory;
+import util.DatabaseConnection;
 
 public class ServiceDAO {
     
@@ -350,5 +349,73 @@ public class ServiceDAO {
             e.printStackTrace();
         }
         return services;
+    }
+
+    public List<Service> getTopRatedServices(int limit) {
+        List<Service> services = new ArrayList<>();
+        String sql = "SELECT s.*, " +
+                    "COALESCE(AVG(r.rating), 0) as avg_rating, " +
+                    "COUNT(r.review_id) as review_count " +
+                    "FROM services s " +
+                    "LEFT JOIN reviews r ON s.service_id = r.service_id " +
+                    "GROUP BY s.service_id " +
+                    "ORDER BY avg_rating DESC, review_count DESC " +
+                    "LIMIT ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, limit);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                Service service = mapServiceFromResultSet(rs);
+                service.setAverageRating(rs.getDouble("avg_rating"));
+                service.setReviewCount(rs.getInt("review_count"));
+                services.add(service);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return services;
+    }
+    
+    public List<Service> getHighDemandServices(int limit) {
+        List<Service> services = new ArrayList<>();
+        String sql = "SELECT s.*, " +
+                    "COUNT(b.booking_id) as booking_count " +
+                    "FROM services s " +
+                    "LEFT JOIN bookings b ON s.service_id = b.service_id " +
+                    "WHERE b.created_at >= NOW() - INTERVAL '30 days' " +
+                    "GROUP BY s.service_id " +
+                    "ORDER BY booking_count DESC " +
+                    "LIMIT ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, limit);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                Service service = mapServiceFromResultSet(rs);
+                service.setBookingCount(rs.getInt("booking_count"));
+                services.add(service);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return services;
+    }
+
+    public Service mapServiceFromResultSet(ResultSet rs) throws SQLException {
+        Service service = new Service();
+        service.setId(rs.getInt("service_id"));
+        service.setName(rs.getString("service_name"));
+        service.setDescription(rs.getString("description"));
+        service.setPrice(rs.getDouble("price"));
+        service.setImagePath(rs.getString("image_path"));
+        service.setCategoryId(rs.getInt("category_id"));
+        return service;
     }
 }

@@ -3,12 +3,13 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Service</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Book Service</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://js.stripe.com/v3/"></script>
+    </head>
 <body class="bg-gray-100">
     <%@ include file="navbar.jsp" %>
 
@@ -79,10 +80,43 @@
                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                 </div>
 
+                <!-- Payment Method Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                    <div class="space-y-4">
+                        <!-- Cash Option -->
+                        <div class="flex items-center space-x-3">
+                            <input type="radio" id="cash" name="paymentMethod" value="cash" checked
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                            <label for="cash" class="text-gray-700">Cash on Service</label>
+                        </div>
+                        
+                        <!-- Card Option -->
+                        <div class="flex items-center space-x-3">
+                            <input type="radio" id="card" name="paymentMethod" value="card"
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                            <label for="card" class="text-gray-700">Credit/Debit Card</label>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Total Cost Display -->
                 <div class="bg-gray-50 p-4 rounded-md">
-                    <p class="text-lg font-semibold">Total Cost: <span id="totalCost">$${service.price}</span></p>
-                    <p class="text-sm text-gray-600">Base rate: $${service.price}/hour</p>
+                    <div class="flex flex-col space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span id="subtotal">$${service.price}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">GST (9%)</span>
+                            <span id="gst">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-lg">Total (incl. GST)</span>
+                            <span class="font-bold text-lg" id="totalCost">$${service.price}</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2">Base rate: $${service.price}/hour</p>
                 </div>
 
                 <!-- Submit Button -->
@@ -158,11 +192,114 @@
     </div>
 
     <script>
+        // Initialize Stripe
+        const stripe = Stripe('${stripePublicKey}');
+
+        // Update button text based on payment method
+        const paymentMethodInputs = document.querySelectorAll('input[name="paymentMethod"]');
+        paymentMethodInputs.forEach(input => {
+            input.addEventListener('change', (e) => {
+                const submitButton = document.querySelector('#confirmButton');
+                if (e.target.value === 'card') {
+                    submitButton.textContent = 'Proceed to Payment';
+                } else {
+                    submitButton.textContent = 'Confirm Booking';
+                }
+            });
+        });
+
+        // Modify the confirm button click handler
+        document.getElementById('confirmButton').addEventListener('click', async function(e) {
+            e.preventDefault();
+            const form = document.getElementById('bookingForm');
+            
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            
+            if (paymentMethod === 'cash') {
+                form.submit();
+                return;
+            }
+
+            // Disable button and show loading state
+            this.disabled = true;
+            this.textContent = 'Processing...';
+
+            try {
+                const hours = parseFloat(document.getElementById('timeLength').value);
+                const basePrice = ${service.price};
+                const total = (basePrice * hours * 1.09).toFixed(2); // Including GST
+
+                const response = await fetch('${pageContext.request.contextPath}/stripe-checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        amount: total,
+                        addressId: document.getElementById('addressId').value,
+                        specialRequests: document.querySelector('textarea[name="specialRequests"]').value,
+                        returnUrl: '${pageContext.request.contextPath}/booking'
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to create checkout session');
+                }
+
+                const data = await response.json();
+
+                // Redirect to Stripe Checkout
+                const result = await stripe.redirectToCheckout({
+                    sessionId: data.sessionId
+                });
+
+                if (result.error) {
+                    throw new Error(result.error.message);
+                }
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert('Payment processing error: ' + error.message);
+                this.disabled = false;
+                this.textContent = 'Proceed to Payment';
+            }
+        });
+
+        // Check URL parameters for success/failure
+        const urlParams = new URLSearchParams(window.location.search);
+        const isSuccess = urlParams.get('success');
+        const sessionId = urlParams.get('session_id');
+
+        if (isSuccess === 'true' && sessionId) {
+            const form = document.getElementById('bookingForm');
+            if (form) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'session_id';
+                input.value = sessionId;
+                form.appendChild(input);
+                form.submit();
+            }
+        } else if (isSuccess === 'false') {
+            alert('Payment was cancelled or failed. Please try again.');
+        }
+
         function calculateTotal() {
             const basePrice = ${service.price};
             const hours = parseFloat(document.getElementById('timeLength').value);
-            const total = basePrice * hours;
-            document.getElementById('totalCost').textContent = '$' + total.toFixed(2);
+            const baseTotal = basePrice * hours;
+            const gstAmount = baseTotal * 0.09;
+            const totalWithGST = baseTotal + gstAmount;
+            
+            document.getElementById('subtotal').textContent = '$' + baseTotal.toFixed(2);
+            document.getElementById('gst').textContent = '$' + gstAmount.toFixed(2);
+            document.getElementById('totalCost').textContent = '$' + totalWithGST.toFixed(2);
         }
 
         function showConfirmation() {
@@ -199,10 +336,6 @@
         function hideAddressModal() {
             document.getElementById('addressModal').classList.add('hidden');
         }
-
-        document.getElementById('confirmButton').addEventListener('click', function() {
-            document.getElementById('bookingForm').submit();
-        });
 
         // Add this function to refresh the address dropdown
         function refreshAddressDropdown(newAddressId, addressData) {

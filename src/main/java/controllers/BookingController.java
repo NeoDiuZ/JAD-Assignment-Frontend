@@ -5,6 +5,8 @@ import dao.ServiceDAO;
 import dao.AddressDAO;
 import models.Service;
 import models.Address;
+import models.Booking;
+import util.StripeConfig;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
@@ -20,6 +22,7 @@ import java.util.List;
 @WebServlet("/booking")
 public class BookingController extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final int ITEMS_PER_PAGE = 10;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
@@ -32,39 +35,47 @@ public class BookingController extends HttpServlet {
         }
 
         try {
-            // Retrieve the selected serviceId from the request
-            int serviceId = Integer.parseInt(request.getParameter("serviceId"));
-
-            // Fetch service details
-            ServiceDAO serviceDAO = new ServiceDAO();
-            Service service = serviceDAO.getServiceById(serviceId);
-
-            if (service == null) {
-                request.setAttribute("error", "Service not found");
-                response.sendRedirect("services.jsp");
-                return;
+            int currentPage = 1;
+            String status = request.getParameter("status");
+            if (status == null) status = "pending"; // Default status
+            
+            try {
+                String pageStr = request.getParameter("page");
+                if (pageStr != null) {
+                    currentPage = Integer.parseInt(pageStr);
+                    if (currentPage < 1) currentPage = 1;
+                }
+            } catch (NumberFormatException e) {
+                currentPage = 1;
             }
 
-            // Pass service details to the booking.jsp page
-            request.setAttribute("service", service);
-
-            // Fetch user addresses
-            AddressDAO addressDAO = new AddressDAO();
+            BookingDAO bookingDAO = new BookingDAO();
             Integer userId = (Integer) session.getAttribute("user");
-            List<Address> addresses = addressDAO.getUserAddresses(userId);
-            request.setAttribute("addresses", addresses);
+            
+            // Get total count of bookings for the selected status
+            int totalBookings = bookingDAO.getTotalBookingsCountByStatus(userId, status);
+            int totalPages = (int) Math.ceil((double) totalBookings / ITEMS_PER_PAGE);
+            
+            // Get paginated bookings for the selected status
+            List<Booking> bookings = bookingDAO.getBookingsPaginatedByStatus(userId, status, currentPage, ITEMS_PER_PAGE);
+            
+            // Set attributes
+            request.setAttribute("currentPage", currentPage);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("bookings", bookings);
+            request.setAttribute("currentStatus", status);
 
-            // Forward to booking.jsp
-            RequestDispatcher dispatcher = request.getRequestDispatcher("booking.jsp");
+            // Get counts for each status
+            request.setAttribute("pendingCount", bookingDAO.getBookingsCountByStatus(userId, "Pending"));
+            request.setAttribute("confirmedCount", bookingDAO.getBookingsCountByStatus(userId, "Confirmed"));
+            request.setAttribute("completedCount", bookingDAO.getBookingsCountByStatus(userId, "Completed"));
+
+            RequestDispatcher dispatcher = request.getRequestDispatcher("profile.jsp");
             dispatcher.forward(request, response);
             
-        } catch (NumberFormatException e) {
-            request.setAttribute("error", "Invalid service ID");
-            response.sendRedirect("services.jsp");
-        } catch (SQLException e) {
-            e.printStackTrace(); // Log the exception
-            request.setAttribute("error", "An error occurred while fetching addresses");
-            response.sendRedirect("errorPage.jsp"); // Redirect to an error page
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("error.jsp");
         }
     }
 

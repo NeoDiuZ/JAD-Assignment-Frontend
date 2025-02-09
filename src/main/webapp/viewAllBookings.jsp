@@ -53,68 +53,217 @@
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold">Booking Management</h2>
                 </div>
-                <div class="overflow-x-auto">
-                    <c:if test="${not empty allBookings}">
-                        <table class="w-full table-auto">
-                            <thead>
-                                <tr class="bg-gray-50">
-                                    <th class="px-4 py-2 text-left">ID</th>
-                                    <th class="px-4 py-2 text-left">Customer</th>
-                                    <th class="px-4 py-2 text-left">Service</th>
-                                    <th class="px-4 py-2 text-left">Duration</th>
-                                    <th class="px-4 py-2 text-left">Total Cost</th>
-                                    <th class="px-4 py-2 text-left">Address</th>
-                                    <th class="px-4 py-2 text-left">Date</th>
-                                    <th class="px-4 py-2 text-left">Status</th>
-                                    <th class="px-4 py-2 text-left">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <c:forEach var="booking" items="${allBookings}">
-                                    <tr class="border-b hover:bg-gray-50">
-                                        <td class="px-4 py-2">${booking.id}</td>
-                                        <td class="px-4 py-2">${booking.userName}</td>
-                                        <td class="px-4 py-2">${booking.serviceName}</td>
-                                        <td class="px-4 py-2">${booking.timeLength} hours</td>
-                                        <td class="px-4 py-2">
-										    <fmt:formatNumber value="${booking.totalCost}" type="currency" currencySymbol="$" maxFractionDigits="2" minFractionDigits="2"/>
-										</td>
-										<td class="px-4 py-2">
-										    <c:out value="${booking.address}" default="No address specified"/>
-										</td>
-                                        <td class="px-4 py-2">
-                                            <fmt:formatDate value="${booking.bookingTime}" pattern="MMM d, yyyy h:mm a" />
-                                        </td>
-                                        <td class="px-4 py-2">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                                ${booking.status eq 'Pending' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                ${booking.status eq 'Confirmed' ? 'bg-green-100 text-green-800' : ''}
-                                                ${booking.status eq 'Completed' ? 'bg-blue-100 text-blue-800' : ''}">
-                                                ${booking.status}
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-2">
-                                            <div class="flex space-x-2">
-                                                <button onclick="confirmStatusUpdate(${booking.id}, 'Confirmed')" 
-                                                        class="text-green-600 hover:text-green-900 ${booking.status eq 'Confirmed' || booking.status eq 'Completed' ? 'hidden' : ''}">
-                                                    Confirm
-                                                </button>
-                                                <button onclick="confirmStatusUpdate(${booking.id}, 'Completed')" 
-                                                        class="text-blue-600 hover:text-blue-900 ${booking.status ne 'Confirmed' ? 'hidden' : ''}">
-                                                    Complete
-                                                </button>
-                                            </div>
-                                        </td>
+
+                <!-- Status Tabs -->
+                <div class="mb-4 border-b border-gray-200">
+                    <ul class="flex flex-wrap -mb-px" role="tablist">
+                        <li class="mr-2">
+                            <button class="inline-block p-4 border-b-2 border-purple-600 text-purple-600 active" 
+                                    onclick="showTab('pending')" id="pending-tab">
+                                Pending
+                                <span class="ml-2 bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                    ${pendingCount}
+                                </span>
+                            </button>
+                        </li>
+                        <li class="mr-2">
+                            <button class="inline-block p-4 border-b-2 border-transparent hover:border-gray-300" 
+                                    onclick="showTab('confirmed')" id="confirmed-tab">
+                                Confirmed
+                                <span class="ml-2 bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                    ${confirmedCount}
+                                </span>
+                            </button>
+                        </li>
+                        <li class="mr-2">
+                            <button class="inline-block p-4 border-b-2 border-transparent hover:border-gray-300" 
+                                    onclick="showTab('completed')" id="completed-tab">
+                                Completed
+                                <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                    ${completedCount}
+                                </span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Booking Tables -->
+                <div class="tab-content">
+                    <!-- Pending Bookings -->
+                    <div id="pending-bookings" class="booking-tab">
+                        <div class="overflow-x-auto">
+                            <table class="w-full table-auto">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-4 py-2 text-left">ID</th>
+                                        <th class="px-4 py-2 text-left">Customer</th>
+                                        <th class="px-4 py-2 text-left">Service</th>
+                                        <th class="px-4 py-2 text-left">Duration</th>
+                                        <th class="px-4 py-2 text-left">Total Cost</th>
+                                        <th class="px-4 py-2 text-left">Address</th>
+                                        <th class="px-4 py-2 text-left">Date</th>
+                                        <th class="px-4 py-2 text-left">Status</th>
+                                        <th class="px-4 py-2 text-left">Actions</th>
                                     </tr>
-                                </c:forEach>
-                            </tbody>
-                        </table>
-                    </c:if>
-                    <c:if test="${empty allBookings}">
-                        <div class="text-center py-4">
-                            <p class="text-gray-500">No bookings found.</p>
+                                </thead>
+                                <tbody>
+                                    <c:forEach var="booking" items="${allBookings}">
+                                        <c:if test="${booking.status eq 'Pending'}">
+                                            <tr class="border-b hover:bg-gray-50">
+                                                <td class="px-4 py-2">${booking.id}</td>
+                                                <td class="px-4 py-2">${booking.userName}</td>
+                                                <td class="px-4 py-2">${booking.serviceName}</td>
+                                                <td class="px-4 py-2">${booking.timeLength} hours</td>
+                                                <td class="px-4 py-2">
+                                                    <fmt:formatNumber value="${booking.totalCost}" type="currency" currencySymbol="$" maxFractionDigits="2" minFractionDigits="2"/>
+                                                </td>
+                                                <td class="px-4 py-2">
+                                                    <c:out value="${booking.address}" default="No address specified"/>
+                                                </td>
+                                                <td class="px-4 py-2">
+                                                    <fmt:formatDate value="${booking.bookingTime}" pattern="MMM d, yyyy h:mm a" />
+                                                </td>
+                                                <td class="px-4 py-2">${booking.status}</td>
+                                                <td class="px-4 py-2">
+                                                    <button onclick="showStatusModal(${booking.id}, 'Confirmed')" 
+                                                            class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+                                                        Confirm
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </c:if>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
                         </div>
-                    </c:if>
+                    </div>
+
+                    <!-- Confirmed Bookings -->
+                    <div id="confirmed-bookings" class="booking-tab hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full table-auto">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-4 py-2 text-left">ID</th>
+                                        <th class="px-4 py-2 text-left">Customer</th>
+                                        <th class="px-4 py-2 text-left">Service</th>
+                                        <th class="px-4 py-2 text-left">Duration</th>
+                                        <th class="px-4 py-2 text-left">Total Cost</th>
+                                        <th class="px-4 py-2 text-left">Address</th>
+                                        <th class="px-4 py-2 text-left">Date</th>
+                                        <th class="px-4 py-2 text-left">Status</th>
+                                        <th class="px-4 py-2 text-left">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <c:forEach var="booking" items="${allBookings}">
+                                        <c:if test="${booking.status eq 'Confirmed'}">
+                                            <tr class="border-b hover:bg-gray-50">
+                                                <td class="px-4 py-2">${booking.id}</td>
+                                                <td class="px-4 py-2">${booking.userName}</td>
+                                                <td class="px-4 py-2">${booking.serviceName}</td>
+                                                <td class="px-4 py-2">${booking.timeLength} hours</td>
+                                                <td class="px-4 py-2">
+                                                    <fmt:formatNumber value="${booking.totalCost}" type="currency" currencySymbol="$" maxFractionDigits="2" minFractionDigits="2"/>
+                                                </td>
+                                                <td class="px-4 py-2">
+                                                    <c:out value="${booking.address}" default="No address specified"/>
+                                                </td>
+                                                <td class="px-4 py-2">
+                                                    <fmt:formatDate value="${booking.bookingTime}" pattern="MMM d, yyyy h:mm a" />
+                                                </td>
+                                                <td class="px-4 py-2">${booking.status}</td>
+                                                <td class="px-4 py-2">
+                                                    <button onclick="showStatusModal(${booking.id}, 'Completed')" 
+                                                            class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                                                        Complete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </c:if>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Completed Bookings -->
+                    <div id="completed-bookings" class="booking-tab hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full table-auto">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-4 py-2 text-left">ID</th>
+                                        <th class="px-4 py-2 text-left">Customer</th>
+                                        <th class="px-4 py-2 text-left">Service</th>
+                                        <th class="px-4 py-2 text-left">Duration</th>
+                                        <th class="px-4 py-2 text-left">Total Cost</th>
+                                        <th class="px-4 py-2 text-left">Address</th>
+                                        <th class="px-4 py-2 text-left">Date</th>
+                                        <th class="px-4 py-2 text-left">Status</th>
+                                        <th class="px-4 py-2 text-left">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <c:forEach var="booking" items="${allBookings}">
+                                        <c:if test="${booking.status eq 'Completed'}">
+                                            <tr class="border-b hover:bg-gray-50">
+                                                <td class="px-4 py-2">${booking.id}</td>
+                                                <td class="px-4 py-2">${booking.userName}</td>
+                                                <td class="px-4 py-2">${booking.serviceName}</td>
+                                                <td class="px-4 py-2">${booking.timeLength} hours</td>
+                                                <td class="px-4 py-2">
+                                                    <fmt:formatNumber value="${booking.totalCost}" type="currency" currencySymbol="$" maxFractionDigits="2" minFractionDigits="2"/>
+                                                </td>
+                                                <td class="px-4 py-2">
+                                                    <c:out value="${booking.address}" default="No address specified"/>
+                                                </td>
+                                                <td class="px-4 py-2">
+                                                    <fmt:formatDate value="${booking.bookingTime}" pattern="MMM d, yyyy h:mm a" />
+                                                </td>
+                                                <td class="px-4 py-2">${booking.status}</td>
+                                                <td class="px-4 py-2">
+                                                    <span class="text-gray-500">No actions available</span>
+                                                </td>
+                                            </tr>
+                                        </c:if>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add this before the closing div of the bookings table section -->
+                <div class="mt-4 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                    <div class="flex flex-1 justify-between sm:hidden">
+                        <a href="?status=${currentStatus}&page=${currentPage - 1}" 
+                           class="${currentPage == 1 ? 'invisible' : ''} relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Previous
+                        </a>
+                        <a href="?status=${currentStatus}&page=${currentPage + 1}"
+                           class="${currentPage == totalPages ? 'invisible' : ''} relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Next
+                        </a>
+                    </div>
+                    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Showing page <span class="font-medium">${currentPage}</span> of
+                                <span class="font-medium">${totalPages}</span>
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                <c:forEach var="i" begin="1" end="${totalPages}">
+                                    <a href="?status=${currentStatus}&page=${i}" 
+                                       class="${currentPage == i ? 'relative z-10 inline-flex items-center bg-purple-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600' : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'}">
+                                        ${i}
+                                    </a>
+                                </c:forEach>
+                            </nav>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -135,7 +284,8 @@
                             class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300">
                         Cancel
                     </button>
-					<form id="statusForm" method="POST" action="${pageContext.request.contextPath}/updateBookingStatus" class="inline">                        <input type="hidden" id="bookingId" name="bookingId" value="">
+                    <form id="statusForm" method="POST" action="${pageContext.request.contextPath}/updateBookingStatus" class="inline">
+                        <input type="hidden" id="bookingId" name="bookingId" value="">
                         <input type="hidden" id="newStatus" name="newStatus" value="">
                         <button type="submit" 
                                 class="px-4 py-2 ml-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
@@ -158,10 +308,16 @@
         }, 5000);
 
         // Status update confirmation handling
-        function confirmStatusUpdate(bookingId, newStatus) {
+        function showStatusModal(bookingId, newStatus) {
             document.getElementById('statusModal').classList.remove('hidden');
             document.getElementById('bookingId').value = bookingId;
             document.getElementById('newStatus').value = newStatus;
+            
+            // Update modal text based on status
+            const modalTitle = document.querySelector('#statusModal h3');
+            const modalText = document.querySelector('#statusModal p');
+            modalTitle.textContent = `${newStatus} Booking`;
+            modalText.textContent = `Are you sure you want to update this booking's status?`;
         }
 
         document.getElementById('statusCancel').addEventListener('click', function() {
@@ -174,6 +330,25 @@
             if (event.target == modal) {
                 modal.classList.add('hidden');
             }
+        }
+
+        function showTab(status) {
+            // Hide all tabs
+            document.querySelectorAll('.booking-tab').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Show selected tab
+            document.getElementById(status + '-bookings').classList.remove('hidden');
+            
+            // Update tab styles
+            document.querySelectorAll('[role="tablist"] button').forEach(button => {
+                button.classList.remove('border-purple-600', 'text-purple-600');
+                button.classList.add('border-transparent');
+            });
+            
+            document.getElementById(status + '-tab').classList.add('border-purple-600', 'text-purple-600');
+            document.getElementById(status + '-tab').classList.remove('border-transparent');
         }
     </script>
 </body>

@@ -52,9 +52,17 @@
                 <h1 class="text-3xl font-bold text-gray-900">${service.name}</h1>
                 <p class="text-gray-600 mt-2">${service.description}</p>
                 
-                <div class="mt-4 flex items-center">
-                    <span class="text-2xl font-bold text-blue-600">$${service.price}</span>
-                    <span class="ml-2 text-gray-500">per service</span>
+                <div class="mt-4">
+                    <div class="flex flex-col">
+                        <div class="flex items-center">
+                            <span class="text-2xl font-bold text-blue-600">$${service.price}</span>
+                            <span class="ml-2 text-gray-500">per hour</span>
+                        </div>
+                        <div class="text-sm text-gray-500 mt-1">
+                            <p>Base rate: $${service.price}/hour</p>
+                            <p>All prices are subject to 9% GST</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Rating display using averageRating -->

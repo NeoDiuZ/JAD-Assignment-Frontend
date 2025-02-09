@@ -72,86 +72,182 @@
                 </div>
 
                 <!-- Booking History Section -->
-					<div class="bg-white shadow-md rounded-lg p-6">
-					    <h2 class="text-xl font-bold text-gray-700 mb-4">Booking History</h2>
-					    <c:choose>
-					        <c:when test="${not empty bookings}">
-					            <div class="overflow-x-auto">
-					                <table class="min-w-full divide-y divide-gray-200">
-					                    <thead class="bg-gray-50">
-					                        <tr>
-					                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-					                                Service
-					                            </th>
-					                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-					                                Booking Time
-					                            </th>
-					                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-					                                Duration
-					                            </th>
-					                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-					                                Status
-					                            </th>
-					                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-					                                Total Cost
-					                            </th>
-					                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-					                                Address
-					                            </th>
-					                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-					                                Special Requests
-					                            </th>
-					                        </tr>
-					                    </thead>
-					                    <tbody class="bg-white divide-y divide-gray-200">
-					                        <c:forEach var="booking" items="${bookings}">
-					                            <tr>
-					                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-					                                    ${booking.serviceName}
-					                                </td>
-					                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-					                                    <fmt:formatDate value="${booking.bookingTime}" pattern="MMM d, yyyy h:mm a" />
-					                                </td>
-					                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-					                                    ${booking.timeLength} hours
-					                                </td>
-					                                <td class="px-6 py-4 whitespace-nowrap">
-													    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-													        ${booking.status eq 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
-													          booking.status eq 'Confirmed' ? 'bg-green-100 text-green-800' : 
-													          booking.status eq 'Completed' ? 'bg-blue-100 text-blue-800' : 
-													          'bg-gray-100 text-gray-800'}">
-													        ${booking.status}
-													    </span>
-													</td>
-					                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-					                                    <fmt:formatNumber value="${booking.totalCost}" type="currency" currencySymbol="$" />
-					                                </td>
-					                                <td class="px-6 py-4 text-sm text-gray-900">
-					                                    ${booking.address}
-					                                </td>
-					                                <td class="px-6 py-4 text-sm text-gray-900">
-					                                    <c:out value="${booking.specialRequests}" default="-" />
-					                                </td>
-					                            </tr>
-					                        </c:forEach>
-					                    </tbody>
-					                </table>
-					            </div>
-					        </c:when>
-					        <c:otherwise>
-					            <div class="text-center py-4">
-					                <p class="text-gray-500 mb-4">No booking history found.</p>
-					                <a href="${pageContext.request.contextPath}/services" 
-					                   class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-					                    Book a Service
-					                </a>
-					            </div>
-					        </c:otherwise>
-					    </c:choose>
-					</div>
+                <div class="bg-white shadow-md rounded-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-700 mb-4">Booking History</h2>
+                    <c:choose>
+                        <c:when test="${not empty bookings}">
+                            <!-- Status Tabs -->
+                            <div class="mb-4 border-b border-gray-200">
+                                <ul class="flex flex-wrap -mb-px" role="tablist">
+                                    <li class="mr-2">
+                                        <button class="inline-block p-4 border-b-2 border-blue-600 text-blue-600 active" 
+                                                onclick="showTab('pending')" id="pending-tab">
+                                            Upcoming
+                                            <span class="ml-2 bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                                ${pendingCount}
+                                            </span>
+                                        </button>
+                                    </li>
+                                    <li class="mr-2">
+                                        <button class="inline-block p-4 border-b-2 border-transparent hover:border-gray-300" 
+                                                onclick="showTab('confirmed')" id="confirmed-tab">
+                                            Confirmed
+                                            <span class="ml-2 bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                                ${confirmedCount}
+                                            </span>
+                                        </button>
+                                    </li>
+                                    <li class="mr-2">
+                                        <button class="inline-block p-4 border-b-2 border-transparent hover:border-gray-300" 
+                                                onclick="showTab('completed')" id="completed-tab">
+                                            Completed
+                                            <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                                ${completedCount}
+                                            </span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Booking Tables -->
+                            <div class="tab-content">
+                                <!-- Pending Bookings -->
+                                <div id="pending-bookings" class="booking-tab">
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date & Time</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <c:forEach var="booking" items="${bookings}">
+                                                    <c:if test="${booking.status eq 'Pending'}">
+                                                        <tr class="hover:bg-gray-50">
+                                                            <td class="px-6 py-4">${booking.serviceName}</td>
+                                                            <td class="px-6 py-4">
+                                                                <fmt:formatDate value="${booking.bookingTime}" pattern="MMM d, yyyy h:mm a" />
+                                                            </td>
+                                                            <td class="px-6 py-4">${booking.timeLength} hours</td>
+                                                            <td class="px-6 py-4">
+                                                                <fmt:formatNumber value="${booking.totalCost}" type="currency" currencySymbol="$" />
+                                                            </td>
+                                                            <td class="px-6 py-4">${booking.address}</td>
+                                                        </tr>
+                                                    </c:if>
+                                                </c:forEach>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Confirmed Bookings -->
+                                <div id="confirmed-bookings" class="booking-tab hidden">
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date & Time</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <c:forEach var="booking" items="${bookings}">
+                                                    <c:if test="${booking.status eq 'Confirmed'}">
+                                                        <tr class="hover:bg-gray-50">
+                                                            <td class="px-6 py-4">${booking.serviceName}</td>
+                                                            <td class="px-6 py-4">
+                                                                <fmt:formatDate value="${booking.bookingTime}" pattern="MMM d, yyyy h:mm a" />
+                                                            </td>
+                                                            <td class="px-6 py-4">${booking.timeLength} hours</td>
+                                                            <td class="px-6 py-4">
+                                                                <fmt:formatNumber value="${booking.totalCost}" type="currency" currencySymbol="$" />
+                                                            </td>
+                                                            <td class="px-6 py-4">${booking.address}</td>
+                                                        </tr>
+                                                    </c:if>
+                                                </c:forEach>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Completed Bookings -->
+                                <div id="completed-bookings" class="booking-tab hidden">
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date & Time</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <c:forEach var="booking" items="${bookings}">
+                                                    <c:if test="${booking.status eq 'Completed'}">
+                                                        <tr class="hover:bg-gray-50">
+                                                            <td class="px-6 py-4">${booking.serviceName}</td>
+                                                            <td class="px-6 py-4">
+                                                                <fmt:formatDate value="${booking.bookingTime}" pattern="MMM d, yyyy h:mm a" />
+                                                            </td>
+                                                            <td class="px-6 py-4">${booking.timeLength} hours</td>
+                                                            <td class="px-6 py-4">
+                                                                <fmt:formatNumber value="${booking.totalCost}" type="currency" currencySymbol="$" />
+                                                            </td>
+                                                            <td class="px-6 py-4">${booking.address}</td>
+                                                        </tr>
+                                                    </c:if>
+                                                </c:forEach>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="text-center py-4">
+                                <p class="text-gray-500 mb-4">No booking history found.</p>
+                                <a href="${pageContext.request.contextPath}/services" 
+                                   class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                    Book a Service
+                                </a>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
             </c:otherwise>
         </c:choose>
     </div>
+
+    <script>
+        function showTab(status) {
+            // Hide all tabs
+            document.querySelectorAll('.booking-tab').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Show selected tab
+            document.getElementById(status + '-bookings').classList.remove('hidden');
+            
+            // Update tab styles
+            document.querySelectorAll('[role="tablist"] button').forEach(button => {
+                button.classList.remove('border-blue-600', 'text-blue-600');
+                button.classList.add('border-transparent');
+            });
+            
+            document.getElementById(status + '-tab').classList.add('border-blue-600', 'text-blue-600');
+            document.getElementById(status + '-tab').classList.remove('border-transparent');
+        }
+    </script>
 </body>
 </html>

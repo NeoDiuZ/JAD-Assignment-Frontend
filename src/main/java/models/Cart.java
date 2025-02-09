@@ -38,6 +38,7 @@ public class Cart {
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
     
     public double getTotalPrice() {
-        return price * timeLength;
+        double basePrice = price * timeLength;
+        return basePrice * 1.09; // Add 9% GST
     }
 }

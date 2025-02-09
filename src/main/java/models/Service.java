@@ -11,6 +11,8 @@ public class Service {
     private String categoryDescription;
     private double averageRating;
     private int reviewCount;
+    private int bookingCount;
+    private int availability;
 
     // Getters and Setters
     public int getId() {
@@ -91,5 +93,21 @@ public class Service {
 
     public void setReviewCount(int reviewCount) {
         this.reviewCount = reviewCount;
+    }
+
+    public int getBookingCount() {
+        return bookingCount;
+    }
+
+    public void setBookingCount(int bookingCount) {
+        this.bookingCount = bookingCount;
+    }
+
+    public int getAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(int availability) {
+        this.availability = availability;
     }
 }

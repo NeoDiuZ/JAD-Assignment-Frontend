@@ -82,7 +82,6 @@ public class AddressController extends HttpServlet {
         
         if (isAjax) {
             response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
             PrintWriter out = response.getWriter();
             
             if (newAddressId > 0) {

@@ -87,7 +87,7 @@
                 <div class="bg-white shadow-md rounded-lg p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-lg font-bold">Recent Bookings</h2>
-                        <a href="viewBookings" class="text-purple-600 hover:text-purple-800">View All</a>
+                        <a href="viewAllBookings" class="text-purple-600 hover:text-purple-800">View All</a>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full table-auto">
@@ -133,70 +133,202 @@
                     </div>
                 </div>
 
-                <!-- Services Management Section -->
+                <!-- Service Analytics Section -->
                 <div class="bg-white shadow-md rounded-lg p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold">Manage Services</h2>
-                        <div class="space-x-2">
-                            <a href="addService" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
-                                Add Service
-                            </a>
-                            <a href="viewServices" class="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700">
-                                View All
-                            </a>
-                        </div>
+                        <h2 class="text-lg font-bold">Service Analytics</h2>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full table-auto">
-                            <thead>
-                                <tr class="bg-gray-50">
-                                    <th class="px-4 py-2 text-left">Name</th>
-                                    <th class="px-4 py-2 text-left">Price</th>
-                                    <th class="px-4 py-2 text-left">Category</th>
-                                    <th class="px-4 py-2 text-left">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <c:forEach var="service" items="${services}" begin="0" end="4">
-                                    <tr class="border-b">
-                                        <td class="px-4 py-2">${service.name}</td>
-                                        <td class="px-4 py-2">$${service.price}</td>
-                                        <td class="px-4 py-2">${service.categoryName}</td>
-                                        <td class="px-4 py-2">
-                                            <div class="flex space-x-2">
-                                                <a href="editService?serviceId=${service.id}" 
-                                                   class="text-blue-600 hover:text-blue-900">Edit</a>
-                                                <button onclick="confirmDelete(${service.id})" 
-                                                        class="text-red-600 hover:text-red-900">Delete</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </c:forEach>
-                            </tbody>
-                        </table>
+                    
+                    <!-- Service Rating Overview -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="border rounded-lg p-4">
+                            <h3 class="text-md font-semibold mb-2">Highest Rated Services</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="bg-gray-50">
+                                            <th class="px-4 py-2 text-left">Service</th>
+                                            <th class="px-4 py-2 text-left">Rating</th>
+                                            <th class="px-4 py-2 text-left">Reviews</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach var="service" items="${topRatedServices}">
+                                            <tr class="border-b">
+                                                <td class="px-4 py-2">${service.name}</td>
+                                                <td class="px-4 py-2">
+                                                    <span class="text-yellow-500">★</span> ${service.averageRating}
+                                                </td>
+                                                <td class="px-4 py-2">${service.reviewCount}</td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4">
+                            <h3 class="text-md font-semibold mb-2">High Demand Services</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="bg-gray-50">
+                                            <th class="px-4 py-2 text-left">Service</th>
+                                            <th class="px-4 py-2 text-left">Bookings</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach var="service" items="${highDemandServices}">
+                                            <tr class="border-b">
+                                                <td class="px-4 py-2">${service.name}</td>
+                                                <td class="px-4 py-2">${service.bookingCount}</td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             
+            <!-- Services Management Section -->
+            <div class="bg-white shadow-md rounded-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold">Manage Services</h2>
+                    <div class="space-x-2">
+                        <a href="addService" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
+                            Add Service
+                        </a>
+                        <a href="viewAllServices" class="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700">
+                            View All
+                        </a>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full table-auto">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-4 py-2 text-left">Name</th>
+                                <th class="px-4 py-2 text-left">Price</th>
+                                <th class="px-4 py-2 text-left">Category</th>
+                                <th class="px-4 py-2 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach var="service" items="${services}" begin="0" end="4">
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">${service.name}</td>
+                                    <td class="px-4 py-2">$${service.price}</td>
+                                    <td class="px-4 py-2">${service.categoryName}</td>
+                                    <td class="px-4 py-2">
+                                        <div class="flex space-x-2">
+                                            <a href="editService?serviceId=${service.id}" 
+                                               class="text-blue-600 hover:text-blue-900">Edit</a>
+                                            <button onclick="confirmDelete(${service.id})" 
+                                                    class="text-red-600 hover:text-red-900">Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Users Management Section -->
 			<div class="bg-white shadow-md rounded-lg p-6 mt-6">
 			    <div class="flex justify-between items-center mb-4">
 			        <h2 class="text-lg font-bold">Registered Users</h2>
 			        <div class="space-x-2">
-			            <a href="viewUsers" class="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700">
+			            <a href="viewAllUsers" class="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700">
 			                View All Users
 			            </a>
 			        </div>
 			    </div>
 			</div>
 
-            <!-- Sales Report Section -->
+            <!-- Advanced Reports Section -->
             <div class="bg-white shadow-md rounded-lg p-6 mt-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold">Sales Reports</h2>
-                    <a href="downloadSalesReport" class="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700">
-                        Download Sales Report
-                    </a>
+                    <h2 class="text-lg font-bold">Advanced Reports</h2>
+                </div>
+                
+                <!-- Sales Report Section -->
+                <div class="mb-6">
+                    <h3 class="text-md font-semibold mb-2">Sales Report</h3>
+                    <div class="flex justify-between items-center">
+                        <p class="text-gray-600">Download detailed sales report with all transactions</p>
+                        <a href="downloadSalesReport" 
+                           class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                            Download Sales Report
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Date Range Booking Report -->
+                <div class="mb-6">
+                    <h3 class="text-md font-semibold mb-2">Bookings by Date Range</h3>
+                    <form action="generateBookingReport" method="GET" class="flex gap-4 items-end">
+                        <div>
+                            <label class="block text-sm text-gray-600">Start Date</label>
+                            <input type="date" name="startDate" required 
+                                   class="mt-1 px-3 py-2 border rounded-md">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600">End Date</label>
+                            <input type="date" name="endDate" required 
+                                   class="mt-1 px-3 py-2 border rounded-md">
+                        </div>
+                        <button type="submit" 
+                                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            Generate Report
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Service-specific Customer Report -->
+                <div class="mb-6">
+                    <h3 class="text-md font-semibold mb-2">Customers by Service</h3>
+                    <form action="generateServiceCustomerReport" method="GET" class="flex gap-4 items-end mb-4">
+                        <div class="flex-grow">
+                            <label class="block text-sm text-gray-600">Select Service</label>
+                            <select name="serviceId" required class="mt-1 px-3 py-2 border rounded-md w-full">
+                                <c:forEach var="service" items="${services}">
+                                    <option value="${service.id}" ${service.id eq selectedServiceId ? 'selected' : ''}>
+                                        ${service.name}
+                                    </option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <button type="submit" 
+                                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            View Customers
+                        </button>
+                    </form>
+                    
+                    <c:if test="${not empty serviceCustomers}">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bookings</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <c:forEach var="customer" items="${serviceCustomers}">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4">${customer.name}</td>
+                                            <td class="px-6 py-4">${customer.email}</td>
+                                            <td class="px-6 py-4">${customer.bookingCount}</td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                    </c:if>
                 </div>
             </div>
         </div>

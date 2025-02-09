@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Date;
+import java.util.Map;
 
 @WebServlet(name = "AdminController", urlPatterns = {
     "/dashboard", 
@@ -30,11 +31,13 @@ import java.util.Date;
     "/deleteService", 
     "/updateService",
     "/downloadSalesReport",
-    "/viewServices",
+    "/viewAllServices",
     "/deleteUser",
-    "/viewBookings",
+    "/viewAllBookings",
     "/updateBookingStatus",
-    "/viewUsers"
+    "/viewAllUsers",
+    "/generateBookingReport",
+    "/generateServiceCustomerReport"
 })
 public class AdminController extends HttpServlet {
     private static final long serialVersionUID = 1L;
@@ -53,34 +56,44 @@ public class AdminController extends HttpServlet {
 	        response.sendRedirect("adminLogin.jsp");
 	        return;
 	    }
-	
-	    String action = request.getServletPath();
-	
+
+	    String servletPath = request.getServletPath();
+	    
 	    try {
-	        switch (action) {
-	            case "/dashboard":
-	                showDashboard(request, response);
-	                break;
-	            case "/addService":
-	                showAddServiceForm(request, response);
-	                break;
-	            case "/editService":
-	                showEditServiceForm(request, response);
-	                break;
-	            case "/viewServices":
-	                viewAllServices(request, response);
-	                break;
-	            case "/viewBookings":
-	                viewAllBookings(request, response);
-	                break;
-	            case "/viewUsers":
+	        switch (servletPath) {
+	            case "/viewAllUsers":
 	                viewAllUsers(request, response);
 	                break;
-	            case "/downloadSalesReport": 
-	                downloadSalesReport(request, response);
+                case "/deleteUser":
+                    deleteUser(request, response);
+                    break;
+	            case "/viewAllServices":
+	                viewAllServices(request, response);
 	                break;
+	            case "/viewAllBookings":
+	                viewAllBookings(request, response);
+	                break;
+                case "/addService":
+                    showAddServiceForm(request, response);
+                    break;
+                case "/editService":
+                    showEditServiceForm(request, response);
+                    break;
+                case "/deleteService":
+                    deleteService(request, response);
+                    break;
+                case "/updateService":
+                    updateService(request, response);
+                    break;
+	            case "/generateBookingReport":
+	                generateBookingReport(request, response);
+	                break;
+	            case "/generateServiceCustomerReport":
+	                generateServiceCustomerReport(request, response);
+	                break;
+	            case "/dashboard":
 	            default:
-	                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+	                showDashboard(request, response);
 	                break;
 	        }
 	    } catch (Exception e) {
@@ -140,6 +153,31 @@ public class AdminController extends HttpServlet {
             List<Service> services = serviceDAO.getServicesWithCategory();
             List<Booking> recentBookings = bookingDAO.getRecentBookings(5);
             List<User> users = userDAO.getAllUsers();
+            
+            // Get top 5 rated services
+            List<Service> topRatedServices = serviceDAO.getTopRatedServices(5);
+            request.setAttribute("topRatedServices", topRatedServices);
+            
+            // Get top 5 high demand services
+            List<Service> highDemandServices = serviceDAO.getHighDemandServices(5);
+            request.setAttribute("highDemandServices", highDemandServices);
+            
+            // Load top customers for dashboard
+            List<Map<String, Object>> topCustomers = bookingDAO.getTopCustomersByValue(10);
+            request.setAttribute("topCustomers", topCustomers);
+            
+            // Get service customers if a service is selected
+            String serviceIdParam = request.getParameter("serviceId");
+            if (serviceIdParam != null && !serviceIdParam.isEmpty()) {
+                try {
+                    int serviceId = Integer.parseInt(serviceIdParam);
+                    List<Map<String, Object>> serviceCustomers = bookingDAO.getCustomersByService(serviceId);
+                    request.setAttribute("serviceCustomers", serviceCustomers);
+                    request.setAttribute("selectedServiceId", serviceId);
+                } catch (NumberFormatException e) {
+                    request.setAttribute("error", "Invalid service ID");
+                }
+            }
             
             // Set attributes
             request.setAttribute("totalServices", totalServices);
@@ -235,10 +273,10 @@ public class AdminController extends HttpServlet {
                 RequestDispatcher dispatcher = request.getRequestDispatcher("editService.jsp");
                 dispatcher.forward(request, response);
             } else {
-                response.sendRedirect("viewServices?error=notfound");
+                response.sendRedirect("viewAllServices?error=notfound");
             }
         } catch (NumberFormatException e) {
-            response.sendRedirect("viewServices?error=invalid");
+            response.sendRedirect("viewAllServices?error=invalid");
         }
     }
 
@@ -253,7 +291,7 @@ public class AdminController extends HttpServlet {
             service.setCategoryId(Integer.parseInt(request.getParameter("categoryId")));
 
             if (serviceDAO.addService(service)) {
-                response.sendRedirect("viewServices?success=add");
+                response.sendRedirect("viewAllServices?success=add");
             } else {
                 response.sendRedirect("addService?error=failed");
             }
@@ -274,12 +312,12 @@ public class AdminController extends HttpServlet {
             service.setCategoryId(Integer.parseInt(request.getParameter("categoryId")));
 
             if (serviceDAO.updateService(service)) {
-                response.sendRedirect("viewServices?success=update");
+                response.sendRedirect("viewAllServices?success=update");
             } else {
                 response.sendRedirect("editService?serviceId=" + service.getId() + "&error=failed");
             }
         } catch (NumberFormatException e) {
-            response.sendRedirect("viewServices?error=invalid");
+            response.sendRedirect("viewAllServices?error=invalid");
         }
     }
 
@@ -288,12 +326,12 @@ public class AdminController extends HttpServlet {
         try {
             int serviceId = Integer.parseInt(request.getParameter("serviceId"));
             if (serviceDAO.deleteService(serviceId)) {
-                response.sendRedirect("viewServices?success=delete");
+                response.sendRedirect("viewAllServices?success=delete");
             } else {
-                response.sendRedirect("viewServices?error=deletefailed");
+                response.sendRedirect("viewAllServices?error=deletefailed");
             }
         } catch (NumberFormatException e) {
-            response.sendRedirect("viewServices?error=invalid");
+            response.sendRedirect("viewAllServices?error=invalid");
         }
     }
 
@@ -319,13 +357,13 @@ public class AdminController extends HttpServlet {
             int statusId = getStatusId(newStatus);
 
             if (bookingDAO.updateBookingStatus(bookingId, statusId)) {
-                response.sendRedirect("viewBookings?success=statusupdated");
+                response.sendRedirect("viewAllBookings?success=statusupdated");
             } else {
-                response.sendRedirect("viewBookings?error=statusupdatefailed");
+                response.sendRedirect("viewAllBookings?error=statusupdatefailed");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("viewBookings?error=system");
+            response.sendRedirect("viewAllBookings?error=system");
         }
     }
 
@@ -346,7 +384,7 @@ public class AdminController extends HttpServlet {
             request.setAttribute("errorMessage", getErrorMessage(error));
         }
         
-        RequestDispatcher dispatcher = request.getRequestDispatcher("viewServices.jsp");
+        RequestDispatcher dispatcher = request.getRequestDispatcher("viewAllServices.jsp");
         dispatcher.forward(request, response);
     }
     
@@ -419,7 +457,7 @@ public class AdminController extends HttpServlet {
             case "completed":
                 return 3;
             default:
-                return 1;
+                throw new IllegalArgumentException("Invalid status: " + status);
         }
     }
 
@@ -456,6 +494,62 @@ public class AdminController extends HttpServlet {
                 return "A system error occurred. Please try again later.";
             default:
                 return "An error occurred.";
+        }
+    }
+
+    private void generateBookingReport(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date startDate = dateFormat.parse(request.getParameter("startDate"));
+            Date endDate = dateFormat.parse(request.getParameter("endDate"));
+            
+            BookingDAO bookingDAO = new BookingDAO();
+            List<Booking> bookings = bookingDAO.getBookingsByDateRange(startDate, endDate);
+            
+            // Set response headers for CSV download
+            response.setContentType("text/csv");
+            response.setHeader("Content-Disposition", 
+                "attachment; filename=bookings_report_" + dateFormat.format(startDate) + "_to_" + 
+                dateFormat.format(endDate) + ".csv");
+            
+            // Write CSV content
+            PrintWriter writer = response.getWriter();
+            writer.println("Booking ID,Date,Customer,Service,Duration,Total Cost,Status,Address");
+            
+            for (Booking booking : bookings) {
+                writer.println(String.format("%d,%s,%s,%s,%.1f,%.2f,%s,%s",
+                    booking.getId(),
+                    dateFormat.format(booking.getBookingTime()),
+                    booking.getUserName(),
+                    booking.getServiceName(),
+                    booking.getTimeLength(),
+                    booking.getTotalCost(),
+                    booking.getStatus(),
+                    booking.getAddress()
+                ));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("dashboard?error=reportGenerationFailed");
+        }
+    }
+    
+    private void generateServiceCustomerReport(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        try {
+            int serviceId = Integer.parseInt(request.getParameter("serviceId"));
+            BookingDAO bookingDAO = new BookingDAO();
+            List<Map<String, Object>> customers = bookingDAO.getCustomersByService(serviceId);
+            
+            request.setAttribute("serviceCustomers", customers);
+            request.setAttribute("selectedServiceId", serviceId);
+            
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/dashboard.jsp");
+            dispatcher.forward(request, response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("dashboard?error=reportGenerationFailed");
         }
     }
 }

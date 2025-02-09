@@ -40,11 +40,21 @@
                 </div>
 
                 <div class="mt-6 border-t pt-4">
-                    <div class="flex justify-between items-center">
-                        <span class="font-bold text-lg">Total</span>
-                        <span class="font-bold text-lg">
-                            $<fmt:formatNumber value="${total}" pattern="#,##0.00"/>
-                        </span>
+                    <div class="flex flex-col space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span>$<fmt:formatNumber value="${total/1.09}" pattern="#,##0.00"/></span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">GST (9%)</span>
+                            <span>$<fmt:formatNumber value="${total - (total/1.09)}" pattern="#,##0.00"/></span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-lg">Total (incl. GST)</span>
+                            <span class="font-bold text-lg">
+                                $<fmt:formatNumber value="${total}" pattern="#,##0.00"/>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
